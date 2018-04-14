@@ -1,0 +1,60 @@
+version: '3.3'
+
+services:
+
+  master:
+    image: softtekcoe/jenkins:${TAG:-latest}
+    ports:
+      - 8080:8080
+    secrets:
+      - jenkins-user
+      - jenkins-pass
+    networks:
+      - default
+    volumes:
+      - jm:/var/jenkins_home
+    deploy:
+      resources:
+        reservations:
+          memory: 500M
+        limits:
+          memory: 1000M
+
+  agent:
+    image: softtekcoe/jenkins-agent:${TAG:-latest}
+    environment:
+      - USER_NAME_SECRET=/run/secrets/${JENKINS_USER_SECRET:-jenkins-user}
+      - PASSWORD_SECRET=/run/secrets/${JENKINS_PASS_SECRET:-jenkins-pass}
+      - COMMAND_OPTIONS=-master http://master:8080  -labels "test" -executors 2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - jworkspace:/workspace/
+    networks:
+      - default
+    secrets:
+      - jenkins-user
+      - source: jenkins-pass
+        mode: 0400
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      resources:
+        reservations:
+          memory: 500M
+        limits:
+          memory: 1000M
+
+secrets:
+  jenkins-user:
+    external: true
+  jenkins-pass:
+    external: true
+
+volumes:
+  jm:
+  jworkspace:
+    external: true
+
+networks:
+  default:
+    external: false

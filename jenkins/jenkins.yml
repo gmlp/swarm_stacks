@@ -1,0 +1,34 @@
+version: '3.3'
+
+services:
+
+  master:
+    image: softtekcoe/jenkins:${TAG:-latest}
+    ports:
+      - 8080:8080
+    secrets:
+      - jenkins-user
+      - jenkins-pass
+    networks:
+      - default
+    volumes:
+      - jm:/var/jenkins_home
+    deploy:
+      resources:
+        reservations:
+          memory: 500M
+        limits:
+          memory: 1000M
+
+secrets:
+  jenkins-user:
+    external: true
+  jenkins-pass:
+    external: true
+
+volumes:
+  jm:
+
+networks:
+  default:
+    external: false
